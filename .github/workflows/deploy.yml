@@ -1,0 +1,63 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main", "master" ]
+
+env:
+  REGION: cn-east-3
+  ORGANIZATION: cloud-project
+  BACKEND_IMAGE: backend
+  FRONTEND_IMAGE: frontend
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # 1. 检出代码
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      # 2. 登录华为云SWR
+      - name: Login to SWR
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin swr.${{ env.REGION }}.myhuaweicloud.com
+      
+      # 3. 构建后端镜像
+      - name: Build Backend Image
+        run: |
+          docker build -t ${{ env.BACKEND_IMAGE }}:${{ github.sha }} ./backend
+          docker tag ${{ env.BACKEND_IMAGE }}:${{ github.sha }} swr.${{ env.REGION }}.myhuaweicloud.com/${{ env.ORGANIZATION }}/${{ env.BACKEND_IMAGE }}:${{ github.sha }}
+      
+      # 4. 构建前端镜像
+      - name: Build Frontend Image
+        run: |
+          docker build -t ${{ env.FRONTEND_IMAGE }}:${{ github.sha }} ./frontend
+          docker tag ${{ env.FRONTEND_IMAGE }}:${{ github.sha }} swr.${{ env.REGION }}.myhuaweicloud.com/${{ env.ORGANIZATION }}/${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+      
+      # 5. 推送到SWR
+      - name: Push to SWR
+        run: |
+          docker push swr.${{ env.REGION }}.myhuaweicloud.com/${{ env.ORGANIZATION }}/${{ env.BACKEND_IMAGE }}:${{ github.sha }}
+          docker push swr.${{ env.REGION }}.myhuaweicloud.com/${{ env.ORGANIZATION }}/${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+      
+      # 6. 配置kubectl
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+      
+      # 7. 更新K8s Deployment
+      - name: Update K8s Deployment
+        run: |
+          # 替换镜像Tag
+          sed -i "s|backend:.*|backend:${{ github.sha }}|g" deployment.yaml
+          sed -i "s|frontend:.*|frontend:${{ github.sha }}|g" deployment.yaml
+          
+          # 应用更新
+          kubectl apply -f deployment.yaml
+          kubectl rollout status deployment/backend
+          kubectl rollout status deployment/frontend
+        env:
+          KUBECONFIG: ${{ secrets.KUBECONFIG }}
