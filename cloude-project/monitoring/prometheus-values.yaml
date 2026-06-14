@@ -1,0 +1,62 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelector: {}
+    podMonitorSelector: {}
+    ruleSelector: {}
+    scrapeConfigSelector: {}
+    enableAdminAPI: true
+    retention: 15d
+    resources:
+      requests:
+        memory: 400Mi
+        cpu: 100m
+      limits:
+        memory: 800Mi
+        cpu: 500m
+
+grafana:
+  enabled: true
+  adminPassword: "admin"
+  resources:
+    requests:
+      memory: 200Mi
+      cpu: 100m
+    limits:
+      memory: 500Mi
+      cpu: 300m
+  service:
+    type: NodePort
+    nodePort: 30000
+  dashboards:
+    defaultDashboardsEnabled: true
+  additionalDashboards:
+    - name: node-exporter-full
+      url: https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/grafana-dashboards/node-exporter-full.json
+    - name: k8s-resources-pods
+      url: https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/grafana-dashboards/k8s-resources-pods.json
+
+alertmanager:
+  enabled: true
+  alertmanagerSpec:
+    replicas: 1
+
+nodeExporter:
+  enabled: true
+  resources:
+    requests:
+      memory: 50Mi
+      cpu: 50m
+    limits:
+      memory: 100Mi
+      cpu: 100m
+
+kubeStateMetrics:
+  enabled: true
+
+grafana-sidecar:
+  dashboards:
+    enabled: true
