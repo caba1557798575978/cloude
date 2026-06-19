@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: spark
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: spark
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: edit
+subjects:
+- kind: ServiceAccount
+  name: spark
+  namespace: default
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spark-wordcount-driver
+  namespace: default
+spec:
+  selector:
+    spark-role: driver
+    spark-app: wordcount
+  ports:
+  - name: spark-driver
+    port: 7077
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: spark-wordcount-driver
+  namespace: default
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      labels:
+        spark-role: driver
+        spark-app: wordcount
+    spec:
+      serviceAccountName: spark
+      restartPolicy: Never
+      containers:
+      - name: spark-driver
+        image: swr.cn-east-3.myhuaweicloud.com/dli-public/spark_general-x86_64:3.1.1
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          /opt/spark/bin/spark-submit \
+            --master k8s://https://kubernetes.default.svc:443 \
+            --deploy-mode cluster \
+            --name spark-wordcount \
+            --class org.apache.spark.deploy.PythonRunner \
+            --conf spark.executor.instances=2 \
+            --conf spark.executor.cores=1 \
+            --conf spark.executor.memory=1g \
+            --conf spark.driver.memory=1g \
+            --conf spark.driver.cores=1 \
+            --conf spark.kubernetes.container.image=swr.cn-east-3.myhuaweicloud.com/dli-public/spark_general-x86_64:3.1.1 \
+            --conf spark.kubernetes.serviceAccount=spark \
+            local:///opt/spark/examples/src/main/python/wordcount.py /opt/spark/README.md
+        resources:
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+          requests:
+            cpu: "1"
+            memory: "1Gi"

@@ -2,18 +2,26 @@ version: '3.8'
 
 services:
   backend:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: backend
     ports:
       - "5000:5000"
     networks:
       - app-network
+    restart: unless-stopped
 
   frontend:
-    build: ./frontend
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: frontend
     ports:
       - "80:80"
     networks:
       - app-network
+    restart: unless-stopped
 
 networks:
   app-network:

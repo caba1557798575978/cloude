@@ -1,0 +1,11 @@
+# 使用 spark-operator 镜像作为基础
+FROM registry.cn-shanghai.aliyuncs.com/acs/spark-operator:v1beta2-1.3.8-3.1.1
+
+# 复制 wordcount.py
+COPY wordcount.py /opt/wordcount.py
+
+# 设置工作目录
+WORKDIR /opt
+
+# 默认命令
+CMD ["/bin/bash"]

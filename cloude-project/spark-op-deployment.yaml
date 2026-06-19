@@ -1,0 +1,95 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "2"
+    meta.helm.sh/release-name: spark-op
+    meta.helm.sh/release-namespace: spark-operator
+  creationTimestamp: "2026-06-18T12:31:52Z"
+  generation: 2
+  labels:
+    app.kubernetes.io/instance: spark-op
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: spark-operator
+    app.kubernetes.io/version: v1beta2-1.3.8-3.1.1
+    helm.sh/chart: spark-operator-1.1.27
+  name: spark-op-spark-operator
+  namespace: spark-operator
+  resourceVersion: "21350"
+  uid: 18b3467f-cb0c-46b1-b47d-b77967da3943
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: spark-op
+      app.kubernetes.io/name: spark-operator
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        prometheus.io/path: /metrics
+        prometheus.io/port: "10254"
+        prometheus.io/scrape: "true"
+      creationTimestamp: null
+      labels:
+        app.kubernetes.io/instance: spark-op
+        app.kubernetes.io/name: spark-operator
+    spec:
+      containers:
+      - args:
+        - -v=2
+        - -logtostderr
+        - -namespace=
+        - -enable-ui-service=true
+        - -ingress-url-format=
+        - -controller-threads=10
+        - -resync-interval=30
+        - -enable-batch-scheduler=false
+        - -label-selector-filter=
+        - -enable-metrics=true
+        - -metrics-labels=app_type
+        - -metrics-port=10254
+        - -metrics-endpoint=/metrics
+        - -metrics-prefix=
+        - -enable-resource-quota-enforcement=false
+        image: swr.cn-north-4.myhuaweicloud.com/cloude/spark-operator:v1beta2-1.3.8-3.1.1
+        imagePullPolicy: IfNotPresent
+        name: spark-operator
+        ports:
+        - containerPort: 10254
+          name: metrics
+          protocol: TCP
+        resources: {}
+        securityContext: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      imagePullSecrets:
+      - name: swr-secret
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: spark-op-spark-operator
+      serviceAccountName: spark-op-spark-operator
+      terminationGracePeriodSeconds: 30
+status:
+  conditions:
+  - lastTransitionTime: "2026-06-18T12:31:52Z"
+    lastUpdateTime: "2026-06-18T12:31:52Z"
+    message: Deployment does not have minimum availability.
+    reason: MinimumReplicasUnavailable
+    status: "False"
+    type: Available
+  - lastTransitionTime: "2026-06-18T13:38:02Z"
+    lastUpdateTime: "2026-06-18T13:38:03Z"
+    message: ReplicaSet "spark-op-spark-operator-55df777ccc" is progressing.
+    reason: ReplicaSetUpdated
+    status: "True"
+    type: Progressing
+  observedGeneration: 2
+  replicas: 1
+  unavailableReplicas: 1
+  updatedReplicas: 1
